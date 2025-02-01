@@ -6,14 +6,9 @@ using System.Data.SqlClient;
 
 namespace MountainGoats.Controllers
 {
-    public class CategoriesController : Controller
+    public class CategoriesController(IConfiguration configuration) : Controller
     {
-        private readonly string _connectionString;
-
-        public CategoriesController(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("BikeStoresConnection");
-        }
+        private readonly string _connectionString = configuration.GetConnectionString("BikeStoresConnection");
 
         public IActionResult Index()
         {
