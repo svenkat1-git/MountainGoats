@@ -1,0 +1,25 @@
+@model IEnumerable<MountainGoatsBikes.Models.OrderSatisfaction>
+    @{
+    ViewData["Title"] = "Order Satisfaction";
+    }
+
+    <h2>Order Satisfaction</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Sat ID</th>
+                <th>Satisfaction Level</th>
+                <th>Order ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var os in Model)
+        {
+            <tr>
+                <td>@os.SatId</td>
+                <td>@os.SatisfactionLevel</td>
+                <td>@os.OrderId</td>
+            </tr>
+        }
+        </tbody>
+    </table>
