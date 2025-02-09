@@ -1,0 +1,31 @@
+@model IEnumerable<MountainGoatsBikes.Models.Product>
+    @{
+    ViewData["Title"] = "Products";
+    }
+
+    <h2>Products</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product ID</th>
+                <th>Product Name</th>
+                <th>Brand ID</th>
+                <th>Category ID</th>
+                <th>Model Year</th>
+                <th>List Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in Model)
+        {
+            <tr>
+                <td>@product.ProductId</td>
+                <td>@product.ProductName</td>
+                <td>@product.BrandId</td>
+                <td>@product.CategoryId</td>
+                <td>@product.ModelYear</td>
+                <td>@product.ListPrice</td>
+            </tr>
+        }
+        </tbody>
+    </table>
