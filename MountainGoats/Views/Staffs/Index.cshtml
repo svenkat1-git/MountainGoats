@@ -1,0 +1,35 @@
+@model IEnumerable<MountainGoatsBikes.Models.Staff>
+    @{
+    ViewData["Title"] = "Staffs";
+    }
+
+    <h2>Staffs</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Staff ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Active</th>
+                <th>Store ID</th>
+                <th>Manager ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var staff in Model)
+        {
+            <tr>
+                <td>@staff.StaffId</td>
+                <td>@staff.FirstName</td>
+                <td>@staff.LastName</td>
+                <td>@staff.Email</td>
+                <td>@staff.Phone</td>
+                <td>@staff.Active</td>
+                <td>@staff.StoreId</td>
+                <td>@staff.ManagerId</td>
+            </tr>
+        }
+        </tbody>
+    </table>
