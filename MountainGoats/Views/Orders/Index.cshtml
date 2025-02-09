@@ -1,0 +1,35 @@
+@model IEnumerable<MountainGoatsBikes.Models.Order>
+    @{
+    ViewData["Title"] = "Orders";
+    }
+
+    <h2>Orders</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer ID</th>
+                <th>Order Status</th>
+                <th>Order Date</th>
+                <th>Required Date</th>
+                <th>Shipped Date</th>
+                <th>Store ID</th>
+                <th>Staff ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+        {
+            <tr>
+                <td>@order.OrderId</td>
+                <td>@order.CustomerId</td>
+                <td>@order.OrderStatus</td>
+                <td>@order.OrderDate.ToShortDateString()</td>
+                <td>@order.RequiredDate.ToShortDateString()</td>
+                <td>@(order.ShippedDate.HasValue ? order.ShippedDate.Value.ToShortDateString() : "N/A")</td>
+                <td>@order.StoreId</td>
+                <td>@order.StaffId</td>
+            </tr>
+        }
+        </tbody>
+    </table>
