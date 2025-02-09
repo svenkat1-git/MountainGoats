@@ -1,39 +1,39 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using MountainGoats.Models;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
+using MountainGoatsBikes.Models;
+using Microsoft.Extensions.Configuration;
 
-namespace MountainGoats.Controllers
+namespace MountainGoatsBikes.Controllers
 {
-    public class CategoriesController(IConfiguration configuration) : Controller
+    public class CategoriesController : Controller
     {
-        private readonly string _connectionString = configuration.GetConnectionString("BikeStoresConnection");
+        private readonly string _connectionString;
+        public CategoriesController(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("BikeStores");
+        }
 
         public IActionResult Index()
         {
             List<Category> categories = new List<Category>();
-
-            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 string query = "SELECT category_id, category_name FROM production.categories";
-                using (SqlCommand cmd = new SqlCommand(query, con))
+                SqlCommand cmd = new SqlCommand(query, conn);
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    con.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    while (reader.Read())
                     {
-                        while (reader.Read())
+                        categories.Add(new Category
                         {
-                            categories.Add(new Category
-                            {
-                                CategoryId = reader.GetInt32(0),
-                                CategoryName = reader.GetString(1)
-                            });
-                        }
+                            CategoryId = reader.GetInt32(0),
+                            CategoryName = reader.GetString(1)
+                        });
                     }
                 }
             }
-
             return View(categories);
         }
     }
