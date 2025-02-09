@@ -13,7 +13,13 @@ namespace MountainGoatsBikes.Controllers
         public OrdersController(IConfiguration configuration)
         {
             _connectionString = configuration.GetConnectionString("BikeStores");
+            if (string.IsNullOrEmpty(_connectionString))
+            {
+                throw new InvalidOperationException("Connection string 'BikeStores' is not configured.");
+            }
+            System.Diagnostics.Debug.WriteLine($"Loaded connection string: {_connectionString}");
         }
+
 
         public IActionResult Index()
         {
