@@ -1,0 +1,31 @@
+@model IEnumerable<MountainGoatsBikes.Models.OrderItem>
+    @{
+    ViewData["Title"] = "Order Items";
+    }
+
+    <h2>Order Items</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Item ID</th>
+                <th>Product ID</th>
+                <th>Quantity</th>
+                <th>List Price</th>
+                <th>Discount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.OrderId</td>
+                <td>@item.ItemId</td>
+                <td>@item.ProductId</td>
+                <td>@item.Quantity</td>
+                <td>@item.ListPrice</td>
+                <td>@item.Discount</td>
+            </tr>
+        }
+        </tbody>
+    </table>
