@@ -11,7 +11,7 @@ namespace MountainGoatsBikes.Controllers
         private readonly string _connectionString;
         public OrderSatisfactionController(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("BikeStores");
+            _connectionString = configuration.GetConnectionString("BikeStores")!;
         }
 
         public IActionResult Index()
@@ -29,8 +29,8 @@ namespace MountainGoatsBikes.Controllers
                         satisfactions.Add(new OrderSatisfaction
                         {
                             SatId = reader.GetInt32(0),
-                            SatisfactionLevel = reader.GetInt32(1),
-                            OrderId = reader.GetInt32(2)
+                            SatisfactionLevel = reader.IsDBNull(1) ? null : reader.GetInt32(1),
+                            OrderId = reader.IsDBNull(2) ? null : reader.GetInt32(2)
                         });
                     }
                 }

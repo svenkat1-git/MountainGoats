@@ -12,12 +12,7 @@ namespace MountainGoatsBikes.Controllers
         private readonly string _connectionString;
         public OrdersController(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("BikeStores");
-            if (string.IsNullOrEmpty(_connectionString))
-            {
-                throw new InvalidOperationException("Connection string 'BikeStores' is not configured.");
-            }
-            System.Diagnostics.Debug.WriteLine($"Loaded connection string: {_connectionString}");
+            _connectionString = configuration.GetConnectionString("BikeStores")!;
         }
 
 
@@ -36,7 +31,7 @@ namespace MountainGoatsBikes.Controllers
                         orders.Add(new Order
                         {
                             OrderId = reader.GetInt32(0),
-                            CustomerId = reader.GetInt32(1),
+                            CustomerId = reader.IsDBNull(1) ? null : reader.GetInt32(1),
                             OrderStatus = reader.GetByte(2),
                             OrderDate = reader.GetDateTime(3),
                             RequiredDate = reader.GetDateTime(4),

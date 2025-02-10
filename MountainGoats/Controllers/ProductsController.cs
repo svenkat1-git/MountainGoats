@@ -9,12 +9,12 @@ namespace MountainGoatsBikes.Controllers
 	public class ProductsController : Controller
 	{
 		private readonly string _connectionString;
-		public ProductsController(IConfiguration configuration)
-		{
-			_connectionString = configuration.GetConnectionString("BikeStores");
-		}
+        public ProductsController(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("BikeStores")!;
+        }
 
-		public IActionResult Index()
+        public IActionResult Index()
 		{
 			List<Product> products = new List<Product>();
 			using (SqlConnection conn = new SqlConnection(_connectionString))

@@ -11,7 +11,7 @@ namespace MountainGoatsBikes.Controllers
         private readonly string _connectionString;
         public StaffsController(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("BikeStores");
+            _connectionString = configuration.GetConnectionString("BikeStores")!;
         }
 
         public IActionResult Index()
@@ -32,7 +32,7 @@ namespace MountainGoatsBikes.Controllers
                             FirstName = reader.GetString(1),
                             LastName = reader.GetString(2),
                             Email = reader.GetString(3),
-                            Phone = reader.GetString(4),
+                            Phone = reader.IsDBNull(4) ? null : reader.GetString(4),
                             Active = reader.GetByte(5),
                             StoreId = reader.GetInt32(6),
                             ManagerId = reader.IsDBNull(7) ? (int?)null : reader.GetInt32(7)

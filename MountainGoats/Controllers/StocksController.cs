@@ -11,7 +11,7 @@ namespace MountainGoatsBikes.Controllers
         private readonly string _connectionString;
         public StocksController(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("BikeStores");
+            _connectionString = configuration.GetConnectionString("BikeStores")!;
         }
 
         public IActionResult Index()
@@ -30,7 +30,7 @@ namespace MountainGoatsBikes.Controllers
                         {
                             StoreId = reader.GetInt32(0),
                             ProductId = reader.GetInt32(1),
-                            Quantity = reader.GetInt32(2)
+                            Quantity = reader.IsDBNull(2) ? null : reader.GetInt32(2)
                         });
                     }
                 }

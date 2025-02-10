@@ -11,7 +11,7 @@ namespace MountainGoatsBikes.Controllers
         private readonly string _connectionString;
         public BrandsController(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("BikeStores");
+            _connectionString = configuration.GetConnectionString("BikeStores")!;
         }
 
         public IActionResult Index()
