@@ -22,4 +22,27 @@ namespace MountainGoatsBikes.Models
         public int TotalRecords { get; set; }
         public int TotalPages => (int)Math.Ceiling((double)TotalRecords / PageSize);
     }
+
+    // Minimal classes for the new Orders page:
+    public class OrderItem
+    {
+        public int ItemId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal ListPrice { get; set; }
+    }
+
+    public class Order
+    {
+        public int OrderId { get; set; }
+        public DateTime OrderDate { get; set; }
+        public decimal OrderTotal { get; set; }  // The total cost of this order
+        public List<OrderItem> Items { get; set; } = new List<OrderItem>();
+    }
+
+    public class OrdersViewModel
+    {
+        public string CustomerName { get; set; } = string.Empty;
+        public List<Order> Orders { get; set; } = new List<Order>();
+    }
 }

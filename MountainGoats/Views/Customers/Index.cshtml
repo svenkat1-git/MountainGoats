@@ -35,7 +35,10 @@
             <td>@cust.City</td>
             <td>@cust.State</td>
             <td>
-                <a asp-action="Details" asp-route-id="@cust.CustomerId">Details</a> |
+                <button type="button" class="btn btn-link"
+                        onclick="showDetails(@cust.CustomerId)">
+                    Details
+                </button> |
                 <a asp-action="Orders" asp-route-id="@cust.CustomerId">Orders</a>
             </td>
         </tr>
@@ -54,3 +57,56 @@
     <a asp-action="Index" asp-route-page="@(Model.Page + 1)">Next</a>
     }
 </div>
+
+<!-- Modal Details HTML -->
+<div id="customerModal" class="modal" tabindex="-1" role="dialog" style="display:none;">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="padding: 20px;">
+            <h4>Customer: <span id="modalCustomerName"></span></h4>
+            <hr />
+            <p><strong>ID</strong>: <span id="modalCustomerId"></span></p>
+            <p><strong>Name</strong>: <span id="modalCustomerFullName"></span></p>
+            <p><strong>Phone</strong>: <span id="modalCustomerPhone"></span></p>
+            <p><strong>Email</strong>: <span id="modalCustomerEmail"></span></p>
+            <p><strong>Address</strong>: <span id="modalCustomerAddress"></span></p>
+            <p><strong>City</strong>: <span id="modalCustomerCity"></span></p>
+            <p><strong>State</strong>: <span id="modalCustomerState"></span></p>
+            <p><strong>Zip</strong>: <span id="modalCustomerZip"></span></p>
+
+            <button type="button" onclick="hideModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showDetails(id) {
+        fetch(`/Customers/Details/${id}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Customer not found');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('modalCustomerName').textContent = data.firstName + " " + data.lastName;
+                document.getElementById('modalCustomerId').textContent = data.customerId;
+                document.getElementById('modalCustomerFullName').textContent = data.firstName + " " + data.lastName;
+                document.getElementById('modalCustomerPhone').textContent = data.phone || "";
+                document.getElementById('modalCustomerEmail').textContent = data.email;
+                document.getElementById('modalCustomerAddress').textContent = data.street || "";
+                document.getElementById('modalCustomerCity').textContent = data.city || "";
+                document.getElementById('modalCustomerState').textContent = data.state || "";
+                document.getElementById('modalCustomerZip').textContent = data.zipCode || "";
+
+                // Show the modal
+                document.getElementById('customerModal').style.display = 'block';
+            })
+            .catch(err => {
+                alert(err.message);
+            });
+    }
+
+    function hideModal() {
+        document.getElementById('customerModal').style.display = 'none';
+    }
+</script>

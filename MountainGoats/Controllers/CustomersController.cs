@@ -13,6 +13,7 @@ namespace MountainGoatsBikes.Controllers
 
         public CustomersController(IConfiguration configuration)
         {
+            // Ensure "BikeStores" matches your appsettings.json key
             _connectionString = configuration.GetConnectionString("BikeStores")!;
         }
 
@@ -83,11 +84,51 @@ namespace MountainGoatsBikes.Controllers
             return View(model);
         }
 
-        // Placeholder action for "Details" button
+        // Minimal changes to this action to retrieve one customer's data and return JSON
+        [HttpGet]
         public IActionResult Details(int id)
         {
-            // Retrieve a single customer's details as needed
-            return View();
+            Customer? customer = null;
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                string query = @"
+                    SELECT customer_id, first_name, last_name, phone, email, street, city, state, zip_code
+                    FROM sales.customers
+                    WHERE customer_id = @id;
+                ";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@id", id);
+
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        customer = new Customer
+                        {
+                            CustomerId = reader.GetInt32(0),
+                            FirstName = reader.GetString(1),
+                            LastName = reader.GetString(2),
+                            Phone = reader.IsDBNull(3) ? null : reader.GetString(3),
+                            Email = reader.GetString(4),
+                            Street = reader.IsDBNull(5) ? null : reader.GetString(5),
+                            City = reader.IsDBNull(6) ? null : reader.GetString(6),
+                            State = reader.IsDBNull(7) ? null : reader.GetString(7),
+                            ZipCode = reader.IsDBNull(8) ? null : reader.GetString(8)
+                        };
+                    }
+                }
+            }
+
+            if (customer == null)
+            {
+                // Return a 404 if the customer doesn't exist
+                return NotFound();
+            }
+
+            // Return JSON so the page can load it into a modal
+            return Json(customer);
         }
 
         // Placeholder action for "Orders" button
