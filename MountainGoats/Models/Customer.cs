@@ -13,12 +13,13 @@ namespace MountainGoatsBikes.Models
         public string? ZipCode { get; set; }
     }
 
-    // define a second class for paging:
+    // Simple paging container used as the model for the view
     public class CustomerList
     {
         public List<Customer> Customers { get; set; } = new List<Customer>();
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int TotalRecords { get; set; }
+        public int TotalPages => (int)Math.Ceiling((double)TotalRecords / PageSize);
     }
 }

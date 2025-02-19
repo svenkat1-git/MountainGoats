@@ -3,24 +3,53 @@ using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using MountainGoatsBikes.Models;
 using Microsoft.Extensions.Configuration;
+using System;
 
 namespace MountainGoatsBikes.Controllers
 {
     public class CustomersController : Controller
     {
         private readonly string _connectionString;
+
         public CustomersController(IConfiguration configuration)
         {
             _connectionString = configuration.GetConnectionString("BikeStores")!;
         }
 
-        public IActionResult Index()
+        // Accepts a page parameter from the query string (default is 1)
+        public IActionResult Index(int page = 1)
         {
-            List<Customer> customers = new List<Customer>();
+            const int pageSize = 10; // Number of customers per page
+
+            // 1. Get total number of customer records
+            int totalRecords = 0;
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                string query = "SELECT customer_id, first_name, last_name, phone, email, street, city, state, zip_code FROM sales.customers";
+                string countQuery = "SELECT COUNT(*) FROM sales.customers";
+                SqlCommand countCmd = new SqlCommand(countQuery, conn);
+                conn.Open();
+                totalRecords = (int)countCmd.ExecuteScalar();
+            }
+
+            // 2. Calculate offset for the current page
+            int offset = (page - 1) * pageSize;
+            List<Customer> customers = new List<Customer>();
+
+            // 3. Retrieve the customer records for the current page using OFFSET/FETCH
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                string query = @"
+                    SELECT customer_id, first_name, last_name, phone, email, street, city, state, zip_code
+                    FROM sales.customers
+                    ORDER BY customer_id
+                    OFFSET @offset ROWS
+                    FETCH NEXT @pageSize ROWS ONLY;
+                ";
+
                 SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@offset", offset);
+                cmd.Parameters.AddWithValue("@pageSize", pageSize);
+
                 conn.Open();
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
@@ -41,7 +70,31 @@ namespace MountainGoatsBikes.Controllers
                     }
                 }
             }
-            return View(customers);
+
+            // 4. Build the CustomerList model with paging info
+            var model = new CustomerList
+            {
+                Customers = customers,
+                Page = page,
+                PageSize = pageSize,
+                TotalRecords = totalRecords
+            };
+
+            return View(model);
+        }
+
+        // Placeholder action for "Details" button
+        public IActionResult Details(int id)
+        {
+            // Retrieve a single customer's details as needed
+            return View();
+        }
+
+        // Placeholder action for "Orders" button
+        public IActionResult Orders(int id)
+        {
+            // Retrieve and display orders for the given customer
+            return View();
         }
     }
 }

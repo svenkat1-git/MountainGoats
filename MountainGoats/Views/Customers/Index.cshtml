@@ -1,37 +1,56 @@
-@model IEnumerable<MountainGoatsBikes.Models.Customer>
-    @{
-    ViewData["Title"] = "Customers";
-    }
+@model MountainGoatsBikes.Models.CustomerList
 
-    <h2>Customers</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Customer ID</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Street</th>
-                <th>City</th>
-                <th>State</th>
-                <th>Zip Code</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var customer in Model)
+@{
+    ViewData["Title"] = "Customers";
+}
+
+<h2>Customers</h2>
+
+<p>Total Records: @Model.TotalRecords</p>
+<p>Showing @Model.PageSize per page</p>
+<p>Number of Pages: @Model.TotalPages</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>City</th>
+            <th>State</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var cust in Model.Customers)
         {
-            <tr>
-                <td>@customer.CustomerId</td>
-                <td>@customer.FirstName</td>
-                <td>@customer.LastName</td>
-                <td>@customer.Phone</td>
-                <td>@customer.Email</td>
-                <td>@customer.Street</td>
-                <td>@customer.City</td>
-                <td>@customer.State</td>
-                <td>@customer.ZipCode</td>
-            </tr>
+        <tr>
+            <td>@cust.CustomerId</td>
+            <td>@cust.FirstName</td>
+            <td>@cust.LastName</td>
+            <td>@cust.Phone</td>
+            <td>@cust.Email</td>
+            <td>@cust.City</td>
+            <td>@cust.State</td>
+            <td>
+                <a asp-action="Details" asp-route-id="@cust.CustomerId">Details</a> |
+                <a asp-action="Orders" asp-route-id="@cust.CustomerId">Orders</a>
+            </td>
+        </tr>
         }
-        </tbody>
-    </table>
+    </tbody>
+</table>
+
+<div>
+    @if (Model.Page > 1)
+    {
+    <a asp-action="Index" asp-route-page="@(Model.Page - 1)">Prev</a>
+    }
+    <span> Page @Model.Page of @Model.TotalPages </span>
+    @if (Model.Page < Model.TotalPages)
+    {
+    <a asp-action="Index" asp-route-page="@(Model.Page + 1)">Next</a>
+    }
+</div>
