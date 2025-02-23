@@ -1,41 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
-using MountainGoatsBikes.Models;
+using MountainGoatsBikes.Repositories;
 using Microsoft.Extensions.Configuration;
 
 namespace MountainGoatsBikes.Controllers
 {
     public class OrderSatisfactionController : Controller
     {
-        private readonly string _connectionString;
-        public OrderSatisfactionController(IConfiguration configuration)
+        private readonly Repository _repository;
+
+        public OrderSatisfactionController(Repository repository)
         {
-            _connectionString = configuration.GetConnectionString("BikeStores")!;
+            _repository = repository;
         }
 
         public IActionResult Index()
         {
-            List<OrderSatisfaction> satisfactions = new List<OrderSatisfaction>();
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            {
-                string query = "SELECT sat_id, satisfaction_level, order_id FROM sales.order_satisfaction";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        satisfactions.Add(new OrderSatisfaction
-                        {
-                            SatId = reader.GetInt32(0),
-                            SatisfactionLevel = reader.IsDBNull(1) ? null : reader.GetInt32(1),
-                            OrderId = reader.IsDBNull(2) ? null : reader.GetInt32(2)
-                        });
-                    }
-                }
-            }
+            var satisfactions = _repository.GetOrderSatisfactions();
             return View(satisfactions);
         }
     }
 }
+

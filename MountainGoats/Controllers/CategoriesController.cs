@@ -1,39 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
-using MountainGoatsBikes.Models;
 using Microsoft.Extensions.Configuration;
+using MountainGoatsBikes.Repositories;
 
 namespace MountainGoatsBikes.Controllers
 {
     public class CategoriesController : Controller
     {
-        private readonly string _connectionString;
-        public CategoriesController(IConfiguration configuration)
+        private readonly Repository _repository;
+        public CategoriesController(Repository repository)
         {
-            _connectionString = configuration.GetConnectionString("BikeStores")!;
+            _repository = repository;
         }
 
         public IActionResult Index()
         {
-            List<Category> categories = new List<Category>();
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            {
-                string query = "SELECT category_id, category_name FROM production.categories";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        categories.Add(new Category
-                        {
-                            CategoryId = reader.GetInt32(0),
-                            CategoryName = reader.GetString(1)
-                        });
-                    }
-                }
-            }
+            var categories = _repository.GetCategories();
             return View(categories);
         }
     }

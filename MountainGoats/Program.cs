@@ -1,8 +1,13 @@
+using MountainGoatsBikes.Repositories;
+
 var builder = WebApplication.CreateBuilder(args);
 
 var configuration = builder.Configuration;
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Register the Repository for dependency injection
+builder.Services.AddTransient<Repository>();
 
 var app = builder.Build();
 

@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace MountainGoatsBikes.Models
 {
     public class Customer
@@ -13,7 +16,7 @@ namespace MountainGoatsBikes.Models
         public string? ZipCode { get; set; }
     }
 
-    // Simple paging container used as the model for the view
+    // Used as the model for the customer list view with paging info
     public class CustomerList
     {
         public List<Customer> Customers { get; set; } = new List<Customer>();
@@ -23,23 +26,7 @@ namespace MountainGoatsBikes.Models
         public int TotalPages => (int)Math.Ceiling((double)TotalRecords / PageSize);
     }
 
-    // Minimal classes for the new Orders page:
-    public class OrderItem
-    {
-        public int ItemId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-        public decimal ListPrice { get; set; }
-    }
-
-    public class Order
-    {
-        public int OrderId { get; set; }
-        public DateTime OrderDate { get; set; }
-        public decimal OrderTotal { get; set; }  // The total cost of this order
-        public List<OrderItem> Items { get; set; } = new List<OrderItem>();
-    }
-
+    // View model for displaying a customer's orders
     public class OrdersViewModel
     {
         public string CustomerName { get; set; } = string.Empty;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace MountainGoatsBikes.Models
 {
@@ -12,5 +13,10 @@ namespace MountainGoatsBikes.Models
         public DateTime? ShippedDate { get; set; }
         public int StoreId { get; set; }
         public int StaffId { get; set; }
+
+        // Additional property used in the Orders view
+        public decimal OrderTotal { get; set; }
+
+        public List<OrderItem> Items { get; set; } = new List<OrderItem>();
     }
 }
