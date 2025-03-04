@@ -3,6 +3,7 @@ using MountainGoatsBikes.Repositories;
 using MountainGoatsBikes.Models;
 using System.Linq;
 using System.Collections.Generic;
+using System;
 
 namespace MountainGoatsBikes.Controllers
 {
@@ -41,10 +42,12 @@ namespace MountainGoatsBikes.Controllers
             var customer = _repository.GetCustomerDetails(id);
             if (customer == null)
                 return NotFound("Customer not found.");
+
             return Json(customer);
         }
 
-        // Orders action: returns a view with the top 3 orders (by total cost) for the given customer
+        // Orders action: calls the new stored-procedure-based method 
+        // to retrieve top 3 orders in the 2016-2017 date range.
         public IActionResult Orders(int id)
         {
             string customerName = _repository.GetCustomerName(id);
@@ -53,33 +56,57 @@ namespace MountainGoatsBikes.Controllers
                 return NotFound("Customer not found.");
             }
 
-            var rows = _repository.GetCustomerOrders(id);
-            var grouped = rows.GroupBy(r => r.OrderId);
+            // We'll collect the final Order objects here
             var orders = new List<Order>();
 
-            foreach (var grp in grouped)
+            try
             {
-                var firstRow = grp.First();
-                var order = new Order
+                // Call the new procedure-based method, specifying the date range for 2016-2017
+                var rows = _repository.GetCustomerOrdersProc(
+                    id,
+                    new DateTime(2016, 1, 1),
+                    new DateTime(2017, 12, 31)
+                );
+
+                // If the stored procedure returned zero rows, we simply have an empty list
+                if (!rows.Any())
                 {
-                    OrderId = firstRow.OrderId,
-                    OrderDate = firstRow.OrderDate,
-                    OrderTotal = firstRow.OrderTotal,
-                    Items = grp.Select(r => new OrderItem
+                    // No orders found
+                }
+                else
+                {
+                    // Group rows by order_id and build your Order objects
+                    var grouped = rows.GroupBy(r => r.OrderId);
+                    foreach (var grp in grouped)
                     {
-                        // Using the consolidated OrderItem model which now includes ProductName
-                        ItemId = r.ItemId,
-                        ProductName = r.ProductName,
-                        Quantity = r.Quantity,
-                        ListPrice = r.ListPrice,
-                        // Optionally set ProductId and Discount if available
-                        ProductId = 0,
-                        Discount = 0
-                    }).ToList()
-                };
-                orders.Add(order);
+                        var firstRow = grp.First();
+                        var order = new Order
+                        {
+                            OrderId = firstRow.OrderId,
+                            OrderDate = firstRow.OrderDate,
+                            OrderTotal = firstRow.OrderTotal,
+                            Items = grp.Select(r => new OrderItem
+                            {
+                                ItemId = r.ItemId,
+                                ProductName = r.ProductName,
+                                Quantity = r.Quantity,
+                                ListPrice = r.ListPrice,
+                                ProductId = 0,
+                                Discount = 0
+                            }).ToList()
+                        };
+                        orders.Add(order);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // If the proc returned an error or we had a problem parsing data,
+                // display it
+                ViewBag.ErrorMessage = ex.Message;
             }
 
+            // Prepare the OrdersViewModel as usual
             var viewModel = new OrdersViewModel
             {
                 CustomerName = customerName,
