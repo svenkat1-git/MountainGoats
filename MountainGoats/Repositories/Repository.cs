@@ -432,3 +432,76 @@ namespace MountainGoatsBikes.Repositories
         public decimal ListPrice { get; set; }
     }
 }
+
+//method that uses parameters for brand, category, product name, and store zip code. 
+// It will query the view_product_details and apply only the filters that the user provided.
+public IEnumerable<ProductDetails> SearchProductDetails(
+    int? brandId,
+    int? categoryId,
+    string? productName,
+    string? storeZip)
+{
+    var results = new List<ProductDetails>();
+    using (var conn = new SqlConnection(_connectionString))
+    {
+        // We’ll use a WHERE clause with checks against NULL parameters
+        string query = @"
+            SELECT 
+                product_id,
+                product_name,
+                brand_id,
+                brand_name,
+                category_id,
+                category_name,
+                model_year,
+                list_price,
+                store_id,
+                store_name,
+                store_phone,
+                store_zip,
+                quantity
+            FROM production.view_product_details
+            WHERE
+                (@brandId IS NULL OR brand_id = @brandId)
+                AND (@categoryId IS NULL OR category_id = @categoryId)
+                AND (@storeZip IS NULL OR store_zip = @storeZip)
+                AND (@productName IS NULL OR product_name LIKE '%' + @productName + '%')
+            ORDER BY product_name;  -- or however you want to sort
+        ";
+
+        using (var cmd = new SqlCommand(query, conn))
+        {
+            cmd.Parameters.AddWithValue("@brandId", (object?)brandId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@categoryId", (object?)categoryId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@productName", (object?)productName ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@storeZip", (object?)storeZip ?? DBNull.Value);
+
+            conn.Open();
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    var pd = new ProductDetails
+                    {
+                        ProductId = reader.GetInt32(0),
+                        ProductName = reader.GetString(1),
+                        BrandId = reader.GetInt32(2),
+                        BrandName = reader.GetString(3),
+                        CategoryId = reader.GetInt32(4),
+                        CategoryName = reader.GetString(5),
+                        ModelYear = reader.GetInt16(6),
+                        ListPrice = reader.GetDecimal(7),
+                        StoreId = reader.GetInt32(8),
+                        StoreName = reader.GetString(9),
+                        StorePhone = reader.IsDBNull(10) ? null : reader.GetString(10),
+                        StoreZip = reader.IsDBNull(11) ? null : reader.GetString(11),
+                        Quantity = reader.IsDBNull(12) ? null : reader.GetInt32(12),
+                    };
+                    results.Add(pd);
+                }
+            }
+        }
+    }
+    return results;
+}
+
