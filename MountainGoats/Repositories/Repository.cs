@@ -1,4 +1,5 @@
 using System;
+using System.Data;  // for CommandType
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -9,6 +10,7 @@ namespace MountainGoatsBikes.Repositories
     public class Repository
     {
         private readonly string _connectionString;
+
         public Repository(IConfiguration configuration)
         {
             _connectionString = configuration.GetConnectionString("BikeStores")
@@ -173,6 +175,7 @@ namespace MountainGoatsBikes.Repositories
             return name;
         }
 
+        // Existing method that gets top 3 orders by total cost using direct query
         public IEnumerable<CustomerOrderRow> GetCustomerOrders(int id)
         {
             var rows = new List<CustomerOrderRow>();
@@ -223,6 +226,60 @@ namespace MountainGoatsBikes.Repositories
                     }
                 }
             }
+            return rows;
+        }
+
+        // ******************************************************************
+        // NEW METHOD that calls the stored procedure "sales.proc_cust_order_details"
+        // ******************************************************************
+        public IEnumerable<CustomerOrderRow> GetCustomerOrdersProc(int customerId, DateTime startDate, DateTime endDate)
+        {
+            var rows = new List<CustomerOrderRow>();
+
+            using (var conn = new SqlConnection(_connectionString))
+            using (var cmd = new SqlCommand("sales.proc_cust_order_details", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@CustomerID", customerId);
+                cmd.Parameters.AddWithValue("@StartDate", startDate);
+                cmd.Parameters.AddWithValue("@EndDate", endDate);
+
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    // If the stored procedure raises an error or hits the CATCH block,
+                    // it returns a single column named "ErrorMessage"
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            // If we detect the single "ErrorMessage" column, throw it as an exception
+                            if (reader.FieldCount == 1 && reader.GetName(0).Equals("ErrorMessage", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string errorMsg = reader.GetString(0);
+                                throw new Exception(errorMsg);
+                            }
+                            else
+                            {
+                                // Otherwise, it's a normal row with order data
+                                var row = new CustomerOrderRow
+                                {
+                                    OrderId = reader.GetInt32(0),
+                                    OrderTotal = reader.GetDecimal(1),
+                                    OrderDate = reader.GetDateTime(2),
+                                    ItemId = reader.GetInt32(3),
+                                    ProductName = reader.GetString(4),
+                                    Quantity = reader.GetInt32(5),
+                                    ListPrice = reader.GetDecimal(6)
+                                };
+                                rows.Add(row);
+                            }
+                        }
+                    }
+                }
+            }
+
             return rows;
         }
 
