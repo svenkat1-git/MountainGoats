@@ -21,5 +21,32 @@ namespace MountainGoatsBikes.Controllers
             var products = _repository.GetProducts();
             return View(products);
         }
+
+        // New Search GET action
+        [HttpGet]
+        public IActionResult Search()
+        {
+            var searchView = new ProductSearchViewModel();
+            return View(searchView);
+        }
+
+        // New Search POST action
+        [HttpPost]
+        public IActionResult Search(ProductSearchViewModel searchView)
+        {
+            // Call the new method in the repository
+            var searchResults = _repository.SearchProductDetails(
+                searchView.BrandId,
+                searchView.CategoryId,
+                searchView.ProductName,
+                searchView.StoreZip
+            );
+
+            // Attach results to the same view model
+            searchView.Results = searchResults;
+
+            // Return the same view with the results
+            return View(searchView);
+        }
     }
 }
