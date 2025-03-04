@@ -8,36 +8,29 @@
 
 <!-- The form posts back to the same action (POST /Products/Search) -->
 <form method="post" asp-action="Search" class="mb-3">
-    <div>
+    <div class="mb-2">
         <label>Pick a brand:</label>
-        <select asp-for="BrandId" class="form-select">
+        <select asp-for="BrandId" asp-items="Model.Brands" class="form-select">
             <option value="">-- Any Brand --</option>
-            <!-- Static example. Replace with dynamic items if desired. -->
-            <option value="1" selected="@(Model.BrandId == 1)">Brand #1</option>
-            <option value="2" selected="@(Model.BrandId == 2)">Brand #2</option>
         </select>
     </div>
 
-    <div>
+    <div class="mb-2">
         <label>Pick a category:</label>
-        <select asp-for="CategoryId" class="form-select">
+        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
             <option value="">-- Any Category --</option>
-            <option value="1" selected="@(Model.CategoryId == 1)">Category #1</option>
-            <option value="2" selected="@(Model.CategoryId == 2)">Category #2</option>
         </select>
     </div>
 
-    <div>
+    <div class="mb-2">
         <label>Bike name:</label>
         <input type="text" asp-for="ProductName" class="form-control" />
     </div>
 
-    <div>
+    <div class="mb-2">
         <label>Store zip:</label>
-        <select asp-for="StoreZip" class="form-select">
+        <select asp-for="StoreZip" asp-items="Model.StoreZips" class="form-select">
             <option value="">-- Any Zip --</option>
-            <option value="33333" selected="@(Model.StoreZip == "33333")">33333</option>
-            <option value="44444" selected="@(Model.StoreZip == "44444")">44444</option>
         </select>
     </div>
 
@@ -49,36 +42,36 @@
 <!-- If the Results list has items, display them in a table -->
 @if (Model.Results != null && Model.Results.Any())
 {
-    <h3>Search Results</h3>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th>Brand</th>
-                <th>Category</th>
-                <th>List Price</th>
-                <th>Store</th>
-                <th>Store Zip</th>
-                <th>Quantity</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.Results)
+<h3>Search Results</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Brand</th>
+            <th>Category</th>
+            <th>List Price</th>
+            <th>Store</th>
+            <th>Store Zip</th>
+            <th>Quantity</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Results)
             {
-                <tr>
-                    <td>@item.ProductName</td>
-                    <td>@item.BrandName</td>
-                    <td>@item.CategoryName</td>
-                    <td>@item.ListPrice.ToString("C")</td>
-                    <td>@item.StoreName</td>
-                    <td>@item.StoreZip</td>
-                    <td>@(item.Quantity ?? 0)</td>
-                </tr>
+        <tr>
+            <td>@item.ProductName</td>
+            <td>@item.BrandName</td>
+            <td>@item.CategoryName</td>
+            <td>@item.ListPrice.ToString("C")</td>
+            <td>@item.StoreName</td>
+            <td>@item.StoreZip</td>
+            <td>@(item.Quantity ?? 0)</td>
+        </tr>
             }
-        </tbody>
-    </table>
+    </tbody>
+</table>
 }
 else
 {
-    <p>No results found.</p>
+<p>No results found.</p>
 }
