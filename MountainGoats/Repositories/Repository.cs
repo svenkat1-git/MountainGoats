@@ -556,4 +556,122 @@ namespace MountainGoatsBikes.Repositories
         public int Quantity { get; set; }
         public decimal ListPrice { get; set; }
     }
-}
+
+    // creating new order method specifically for Debra Burks
+    public void NewOrder()
+        {
+            using var conn = new SqlConnection(_connectionString);
+            conn.Open();
+
+            // Look up IDs by name:
+            int customerId = GetCustomerId(conn, "Debra", "Burks")
+                ?? throw new Exception("Could not find customer Debra Burks.");
+            int storeId = GetStoreId(conn, "Rowlett Bikes")
+                ?? throw new Exception("Could not find store 'Rowlett Bikes'.");
+            int staffId = GetStaffId(conn, "Lyla", "Terrell")
+                ?? throw new Exception("Could not find staff 'Lyla Terrell'.");
+            int productId1 = GetProductId(conn, "Trek Powerfly 5 - 2018")
+                ?? throw new Exception("Could not find product 'Trek Powerfly 5 - 2018'.");
+            int productId2 = GetProductId(conn, "Surly Straggler 650b – 2018")
+                ?? throw new Exception("Could not find product 'Surly Straggler 650b – 2018'.");
+
+            using var tran = conn.BeginTransaction();
+            try
+            {
+                // 1) Insert new order
+                string insertOrderSql = @"
+            INSERT INTO sales.orders 
+                (customer_id, order_status, order_date, required_date, shipped_date, store_id, staff_id)
+            VALUES
+                (@custId, 1, GETDATE(), DATEADD(DAY, 7, GETDATE()), NULL, @storeId, @staffId);
+            SELECT SCOPE_IDENTITY();
+        ";
+
+                int newOrderId;
+                using (var cmdOrder = new SqlCommand(insertOrderSql, conn, tran))
+                {
+                    cmdOrder.Parameters.AddWithValue("@custId", customerId);
+                    cmdOrder.Parameters.AddWithValue("@storeId", storeId);
+                    cmdOrder.Parameters.AddWithValue("@staffId", staffId);
+
+                    object result = cmdOrder.ExecuteScalar();
+                    newOrderId = Convert.ToInt32(result);
+                }
+
+                // 2) Insert the two order items
+                // For example, each item has quantity=1; adjust list_price or quantity as needed.
+                string insertItemsSql = @"
+            INSERT INTO sales.order_items (order_id, item_id, product_id, quantity, list_price, discount)
+            VALUES
+                (@orderId, 1, @productId1, 1, 1200.00, 0),
+                (@orderId, 2, @productId2, 1, 1400.00, 0);
+        ";
+                using (var cmdItems = new SqlCommand(insertItemsSql, conn, tran))
+                {
+                    cmdItems.Parameters.AddWithValue("@orderId", newOrderId);
+                    cmdItems.Parameters.AddWithValue("@productId1", productId1);
+                    cmdItems.Parameters.AddWithValue("@productId2", productId2);
+
+                    cmdItems.ExecuteNonQuery();
+                }
+
+                // 3) Commit on success
+                tran.Commit();
+            }
+            catch
+            {
+                // Rollback on error
+                tran.Rollback();
+                throw;
+            }
+        }
+
+        // Below are helper methods to look up IDs by name.
+        // They return null if no matching record is found, so you can handle that gracefully.
+        private int? GetCustomerId(SqlConnection conn, string firstName, string lastName)
+        {
+            string sql = @"SELECT customer_id FROM sales.customers
+                   WHERE first_name = @fn AND last_name = @ln;";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@fn", firstName);
+            cmd.Parameters.AddWithValue("@ln", lastName);
+
+            object result = cmd.ExecuteScalar();
+            return (result == null) ? (int?)null : Convert.ToInt32(result);
+        }
+
+        private int? GetStoreId(SqlConnection conn, string storeName)
+        {
+            string sql = @"SELECT store_id FROM sales.stores
+                   WHERE store_name = @storeName;";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@storeName", storeName);
+
+            object result = cmd.ExecuteScalar();
+            return (result == null) ? (int?)null : Convert.ToInt32(result);
+        }
+
+        private int? GetStaffId(SqlConnection conn, string firstName, string lastName)
+        {
+            string sql = @"SELECT staff_id FROM sales.staffs
+                   WHERE first_name = @fn AND last_name = @ln;";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@fn", firstName);
+            cmd.Parameters.AddWithValue("@ln", lastName);
+
+            object result = cmd.ExecuteScalar();
+            return (result == null) ? (int?)null : Convert.ToInt32(result);
+        }
+
+        private int? GetProductId(SqlConnection conn, string productName)
+        {
+            string sql = @"SELECT product_id FROM production.products
+                   WHERE product_name = @productName;";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@productName", productName);
+
+            object result = cmd.ExecuteScalar();
+            return (result == null) ? (int?)null : Convert.ToInt32(result);
+        }
+
+    }
