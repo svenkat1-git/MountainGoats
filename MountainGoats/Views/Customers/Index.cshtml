@@ -39,7 +39,10 @@
                         onclick="showDetails(@cust.CustomerId)">
                     Details
                 </button> |
-                <a asp-action="Orders" asp-route-id="@cust.CustomerId">Orders</a>
+                <a asp-action="Orders" asp-route-id="@cust.CustomerId">Orders</a> |
+
+                <!-- New Order button -->
+                <a asp-action="NewOrder" asp-route-id="@cust.CustomerId">New Order</a>
             </td>
         </tr>
         }
