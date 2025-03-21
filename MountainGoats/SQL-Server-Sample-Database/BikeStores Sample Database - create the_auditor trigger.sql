@@ -1,6 +1,12 @@
 USE BikeStores;
 GO
 
+-- Drop the trigger if it exists
+IF OBJECT_ID('sales.the_auditor', 'TR') IS NOT NULL
+    DROP TRIGGER sales.the_auditor;
+GO
+
+
 -- Create the trigger "the_auditor" on the sales.orders table
 CREATE TRIGGER the_auditor
 ON sales.orders
@@ -9,15 +15,13 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Insert an audit record for each row affected in the orders table.
-    INSERT INTO sales.bikestore_audit (activity_type, record_info)
+    -- Insert an audit record for each affected row
+    INSERT INTO dbo.bikestore_audit (activity_type, record_info)
     SELECT
-        -- Determine if the operation was an insert (no matching deleted row) or an update (matching deleted row exists)
         CASE 
             WHEN d.order_id IS NULL THEN 'order created'
             ELSE 'order updated'
         END AS activity_type,
-        -- Concatenate order details into a single string
         'OrderID: ' + CAST(i.order_id AS VARCHAR(20)) +
         ', CustomerID: ' + CAST(i.customer_id AS VARCHAR(20)) +
         ', StaffID: ' + CAST(i.staff_id AS VARCHAR(20)) +

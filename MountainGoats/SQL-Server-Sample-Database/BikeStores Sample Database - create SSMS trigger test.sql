@@ -1,5 +1,11 @@
 USE BikeStores;
 GO
+
+-- Drop the test procedure if it exists
+IF OBJECT_ID('sales.sp_TestOrdersTrigger', 'P') IS NOT NULL
+    DROP PROCEDURE sales.sp_TestOrdersTrigger;
+GO
+
 --------------------------------------------------------------------------------
 -- STEP 1: Ensure Valid Reference Data Exists (Based on IDs)
 --------------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 USE BikeStores;
 GO
 
-CREATE TABLE sales.bikestore_audit
+CREATE TABLE dbo.bikestore_audit
 (
     id BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     audit_timestamp DATETIME NOT NULL CONSTRAINT DF_bikestore_audit_audit_timestamp DEFAULT GETDATE(),
