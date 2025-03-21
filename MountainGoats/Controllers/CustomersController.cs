@@ -46,8 +46,7 @@ namespace MountainGoatsBikes.Controllers
             return Json(customer);
         }
 
-        // Orders action: calls the new stored-procedure-based method 
-        // to retrieve top 3 orders in the 2016-2017 date range.
+        // Orders action: retrieves the three most recent orders (by descending date) for a given customer.
         public IActionResult Orders(int id)
         {
             string customerName = _repository.GetCustomerName(id);
@@ -56,35 +55,30 @@ namespace MountainGoatsBikes.Controllers
                 return NotFound("Customer not found.");
             }
 
-            // We'll collect the final Order objects here
             var orders = new List<Order>();
 
             try
             {
-                // Call the new procedure-based method, specifying the date range for 2016-2017
-                var rows = _repository.GetCustomerOrdersProc(
-                    id,
-                    new DateTime(2016, 1, 1),
-                    new DateTime(2017, 12, 31)
-                );
+                // Retrieve all orders for this customer over a wide date range.
+                var rows = _repository.GetCustomerOrdersProc(id, new DateTime(1900, 1, 1), DateTime.Today);
 
-                // If the stored procedure returned zero rows, we simply have an empty list
-                if (!rows.Any())
+                if (rows.Any())
                 {
-                    // No orders found
-                }
-                else
-                {
-                    // Group rows by order_id and build your Order objects
+                    // Group rows by OrderId.
                     var grouped = rows.GroupBy(r => r.OrderId);
-                    foreach (var grp in grouped)
+
+                    // Order the groups by descending OrderDate (from the first row of each group)
+                    // and take the top 3.
+                    var top3Groups = grouped.OrderByDescending(g => g.First().OrderDate).Take(3);
+
+                    foreach (var grp in top3Groups)
                     {
                         var firstRow = grp.First();
                         var order = new Order
                         {
                             OrderId = firstRow.OrderId,
                             OrderDate = firstRow.OrderDate,
-                            OrderTotal = firstRow.OrderTotal,
+                            OrderTotal = firstRow.OrderTotal,  // from your stored-procedure result
                             Items = grp.Select(r => new OrderItem
                             {
                                 ItemId = r.ItemId,
@@ -101,12 +95,11 @@ namespace MountainGoatsBikes.Controllers
             }
             catch (Exception ex)
             {
-                // If the proc returned an error or we had a problem parsing data,
-                // display it
+                var errorModel = new MountainGoats.Models.ErrorViewModel { RequestId = HttpContext.TraceIdentifier };
                 ViewBag.ErrorMessage = ex.Message;
+                return View("Error", errorModel);
             }
 
-            // Prepare the OrdersViewModel as usual
             var viewModel = new OrdersViewModel
             {
                 CustomerName = customerName,
@@ -114,6 +107,26 @@ namespace MountainGoatsBikes.Controllers
             };
 
             return View(viewModel);
+        }
+
+        [HttpGet]
+        public IActionResult NewOrder(int id)
+        {
+            try
+            {
+                // Create a new order for the customer with the given id using two fixed items.
+                // (The repository method NewOrder(int customerId) is updated to hard-code the two product IDs,
+                // look up the store "Rowlett Bikes" and the staff "Layla Terrell".)
+                _repository.NewOrder(id);
+                // Redirect to the Orders action for this customer.
+                return RedirectToAction("Orders", new { id = id });
+            }
+            catch (Exception ex)
+            {
+                var errorModel = new MountainGoats.Models.ErrorViewModel { RequestId = HttpContext.TraceIdentifier };
+                ViewBag.ErrorMessage = ex.Message;
+                return View("Error", errorModel);
+            }
         }
     }
 }

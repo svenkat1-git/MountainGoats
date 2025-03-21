@@ -229,9 +229,7 @@ namespace MountainGoatsBikes.Repositories
             return rows;
         }
 
-        // ******************************************************************
         // NEW METHOD that calls the stored procedure "sales.proc_cust_order_details"
-        // ******************************************************************
         public IEnumerable<CustomerOrderRow> GetCustomerOrdersProc(int customerId, DateTime startDate, DateTime endDate)
         {
             var rows = new List<CustomerOrderRow>();
@@ -240,21 +238,16 @@ namespace MountainGoatsBikes.Repositories
             using (var cmd = new SqlCommand("sales.proc_cust_order_details", conn))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
-
                 cmd.Parameters.AddWithValue("@CustomerID", customerId);
                 cmd.Parameters.AddWithValue("@StartDate", startDate);
                 cmd.Parameters.AddWithValue("@EndDate", endDate);
-
                 conn.Open();
                 using (var reader = cmd.ExecuteReader())
                 {
-                    // If the stored procedure raises an error or hits the CATCH block,
-                    // it returns a single column named "ErrorMessage"
                     if (reader.HasRows)
                     {
                         while (reader.Read())
                         {
-                            // If we detect the single "ErrorMessage" column, throw it as an exception
                             if (reader.FieldCount == 1 && reader.GetName(0).Equals("ErrorMessage", StringComparison.OrdinalIgnoreCase))
                             {
                                 string errorMsg = reader.GetString(0);
@@ -262,7 +255,6 @@ namespace MountainGoatsBikes.Repositories
                             }
                             else
                             {
-                                // Otherwise, it's a normal row with order data
                                 var row = new CustomerOrderRow
                                 {
                                     OrderId = reader.GetInt32(0),
@@ -318,7 +310,7 @@ namespace MountainGoatsBikes.Repositories
             var orders = new List<Order>();
             using (var conn = new SqlConnection(_connectionString))
             {
-                string query = "SELECT order_id, customer_id, order_status, order_date, required_date, shipped_date, store_id, staff_id FROM sales.orders";
+                string query = "SELECT order_id, customer_id, order_status, order_date, required_date, shipped_date, store_id, staff_id FROM sales.orders ORDER BY order_date DESC";
                 using (var cmd = new SqlCommand(query, conn))
                 {
                     conn.Open();
@@ -477,7 +469,6 @@ namespace MountainGoatsBikes.Repositories
             return stores;
         }
 
-        // New method: SearchProductDetails
         public IEnumerable<ProductDetails> SearchProductDetails(
             int? brandId,
             int? categoryId,
@@ -543,50 +534,36 @@ namespace MountainGoatsBikes.Repositories
             }
             return results;
         }
-    }
 
-    // Helper model for the customer orders query
-    public class CustomerOrderRow
-    {
-        public int OrderId { get; set; }
-        public decimal OrderTotal { get; set; }
-        public DateTime OrderDate { get; set; }
-        public int ItemId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-        public decimal ListPrice { get; set; }
-    }
-
-    // creating new order method specifically for Debra Burks
-    public void NewOrder()
+        // New method: Create a new order for any customer with the two fixed items.
+        // The method accepts the customer ID as a parameter.
+        // It hardcodes the product IDs for the two items:
+        //   Trek Powerfly 5 – 2018 (product_id 200)
+        //   Surly Straggler 650b (product_id 164)
+        // It looks up the store "Rowlett Bikes" and the staff "Layla Terrell".
+        public void NewOrder(int customerId)
         {
             using var conn = new SqlConnection(_connectionString);
             conn.Open();
 
-            // Look up IDs by name:
-            int customerId = GetCustomerId(conn, "Debra", "Burks")
-                ?? throw new Exception("Could not find customer Debra Burks.");
             int storeId = GetStoreId(conn, "Rowlett Bikes")
                 ?? throw new Exception("Could not find store 'Rowlett Bikes'.");
-            int staffId = GetStaffId(conn, "Lyla", "Terrell")
-                ?? throw new Exception("Could not find staff 'Lyla Terrell'.");
-            int productId1 = GetProductId(conn, "Trek Powerfly 5 - 2018")
-                ?? throw new Exception("Could not find product 'Trek Powerfly 5 - 2018'.");
-            int productId2 = GetProductId(conn, "Surly Straggler 650b – 2018")
-                ?? throw new Exception("Could not find product 'Surly Straggler 650b – 2018'.");
+            int staffId = GetStaffId(conn, "Layla", "Terrell")
+                ?? throw new Exception("Could not find staff 'Layla Terrell'.");
+            int productId1 = 200; // Trek Powerfly 5 – 2018
+            int productId2 = 164; // Surly Straggler 650b
 
             using var tran = conn.BeginTransaction();
             try
             {
                 // 1) Insert new order
                 string insertOrderSql = @"
-            INSERT INTO sales.orders 
-                (customer_id, order_status, order_date, required_date, shipped_date, store_id, staff_id)
-            VALUES
-                (@custId, 1, GETDATE(), DATEADD(DAY, 7, GETDATE()), NULL, @storeId, @staffId);
-            SELECT SCOPE_IDENTITY();
-        ";
-
+                    INSERT INTO sales.orders 
+                        (customer_id, order_status, order_date, required_date, shipped_date, store_id, staff_id)
+                    VALUES
+                        (@custId, 1, GETDATE(), DATEADD(DAY, 7, GETDATE()), NULL, @storeId, @staffId);
+                    SELECT SCOPE_IDENTITY();
+                ";
                 int newOrderId;
                 using (var cmdOrder = new SqlCommand(insertOrderSql, conn, tran))
                 {
@@ -598,14 +575,13 @@ namespace MountainGoatsBikes.Repositories
                     newOrderId = Convert.ToInt32(result);
                 }
 
-                // 2) Insert the two order items
-                // For example, each item has quantity=1; adjust list_price or quantity as needed.
+                // 2) Insert the two order items with fixed product IDs.
                 string insertItemsSql = @"
-            INSERT INTO sales.order_items (order_id, item_id, product_id, quantity, list_price, discount)
-            VALUES
-                (@orderId, 1, @productId1, 1, 1200.00, 0),
-                (@orderId, 2, @productId2, 1, 1400.00, 0);
-        ";
+                    INSERT INTO sales.order_items (order_id, item_id, product_id, quantity, list_price, discount)
+                    VALUES
+                        (@orderId, 1, @productId1, 1, 1200.00, 0),
+                        (@orderId, 2, @productId2, 1, 1400.00, 0);
+                ";
                 using (var cmdItems = new SqlCommand(insertItemsSql, conn, tran))
                 {
                     cmdItems.Parameters.AddWithValue("@orderId", newOrderId);
@@ -615,27 +591,31 @@ namespace MountainGoatsBikes.Repositories
                     cmdItems.ExecuteNonQuery();
                 }
 
-                // 3) Commit on success
                 tran.Commit();
             }
             catch
             {
-                // Rollback on error
                 tran.Rollback();
                 throw;
             }
         }
 
-        // Below are helper methods to look up IDs by name.
-        // They return null if no matching record is found, so you can handle that gracefully.
+        // Public method to get customer ID by name.
+        public int? GetCustomerIdByName(string firstName, string lastName)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            conn.Open();
+            return GetCustomerId(conn, firstName, lastName);
+        }
+
+        // Helper methods to look up IDs by name.
         private int? GetCustomerId(SqlConnection conn, string firstName, string lastName)
         {
             string sql = @"SELECT customer_id FROM sales.customers
-                   WHERE first_name = @fn AND last_name = @ln;";
+                           WHERE first_name = @fn AND last_name = @ln;";
             using var cmd = new SqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@fn", firstName);
             cmd.Parameters.AddWithValue("@ln", lastName);
-
             object result = cmd.ExecuteScalar();
             return (result == null) ? (int?)null : Convert.ToInt32(result);
         }
@@ -643,10 +623,9 @@ namespace MountainGoatsBikes.Repositories
         private int? GetStoreId(SqlConnection conn, string storeName)
         {
             string sql = @"SELECT store_id FROM sales.stores
-                   WHERE store_name = @storeName;";
+                           WHERE store_name = @storeName;";
             using var cmd = new SqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@storeName", storeName);
-
             object result = cmd.ExecuteScalar();
             return (result == null) ? (int?)null : Convert.ToInt32(result);
         }
@@ -654,11 +633,10 @@ namespace MountainGoatsBikes.Repositories
         private int? GetStaffId(SqlConnection conn, string firstName, string lastName)
         {
             string sql = @"SELECT staff_id FROM sales.staffs
-                   WHERE first_name = @fn AND last_name = @ln;";
+                           WHERE first_name = @fn AND last_name = @ln;";
             using var cmd = new SqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@fn", firstName);
             cmd.Parameters.AddWithValue("@ln", lastName);
-
             object result = cmd.ExecuteScalar();
             return (result == null) ? (int?)null : Convert.ToInt32(result);
         }
@@ -666,12 +644,23 @@ namespace MountainGoatsBikes.Repositories
         private int? GetProductId(SqlConnection conn, string productName)
         {
             string sql = @"SELECT product_id FROM production.products
-                   WHERE product_name = @productName;";
+                           WHERE product_name = @productName;";
             using var cmd = new SqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@productName", productName);
-
             object result = cmd.ExecuteScalar();
             return (result == null) ? (int?)null : Convert.ToInt32(result);
         }
-
     }
+
+    // Helper model for the customer orders query.
+    public class CustomerOrderRow
+    {
+        public int OrderId { get; set; }
+        public decimal OrderTotal { get; set; }
+        public DateTime OrderDate { get; set; }
+        public int ItemId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal ListPrice { get; set; }
+    }
+}
